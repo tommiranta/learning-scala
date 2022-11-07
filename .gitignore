@@ -1,2 +1,9 @@
+.DS_Store
+$HOME/
 *.class
 *.log
+.metals/
+.bloop/
+.ammonite/
+metals.sbt
+target/
