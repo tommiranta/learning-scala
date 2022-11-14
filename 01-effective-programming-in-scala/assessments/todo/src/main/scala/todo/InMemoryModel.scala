@@ -4,22 +4,36 @@ import cats.implicits.*
 import scala.collection.mutable
 import todo.data.*
 
-/**
- * The InMemoryModel is a Model that stores all the tasks in RAM, and hence they
- * are lost when the server restarts.
- *
- * You should modify this file.
- */
+/** The InMemoryModel is a Model that stores all the tasks in RAM, and hence
+  * they are lost when the server restarts.
+  *
+  * You should modify this file.
+  */
 object InMemoryModel extends Model:
   /* These are the tasks the application starts with. You can change these if you want. */
   val defaultTasks = List(
-    Id(0) -> Task(State.completedNow, "Complete Effective Scala Week 2", None, List(Tag("programming"), Tag("scala"))),
-    Id(1) -> Task(State.Active, "Complete Effective Scala Week 3", Some("Finish the todo list exercise"), List(Tag("programming"), Tag("scala"), Tag("encapsulation"), Tag("sbt"))),
-    Id(2) -> Task(State.Active, "Make a sandwich", Some("Cheese and salad or ham and tomato?"), List(Tag("food"), Tag("lunch")))
+    Id(0) -> Task(
+      State.completedNow,
+      "Complete Effective Scala Week 2",
+      None,
+      List(Tag("programming"), Tag("scala"))
+    ),
+    Id(1) -> Task(
+      State.Active,
+      "Complete Effective Scala Week 3",
+      Some("Finish the todo list exercise"),
+      List(Tag("programming"), Tag("scala"), Tag("encapsulation"), Tag("sbt"))
+    ),
+    Id(2) -> Task(
+      State.Active,
+      "Make a sandwich",
+      Some("Cheese and salad or ham and tomato?"),
+      List(Tag("food"), Tag("lunch"))
+    )
   )
 
   /* Every Task is associated with an Id. Ids must be unique. */
-  private val idGenerator = IdGenerator.nextId
+  private val idGenerator = IdGenerator(Id(3))
 
   /* The idStore stores the associated between Ids and Tasks. We use a
    * LinkedHashMap so we can access elements in insertion order. We need to keep
@@ -34,29 +48,32 @@ object InMemoryModel extends Model:
 
   def create(task: Task): Id =
     val id = idGenerator.nextId()
+    idStore.addOne(id, task)
     id
 
   def read(id: Id): Option[Task] =
     idStore.get(id)
 
   def complete(id: Id): Option[Task] =
-    None
+    val task = idStore.get(id).get.complete
+    update(id)(_ => task)
 
   def update(id: Id)(f: Task => Task): Option[Task] =
     idStore.updateWith(id)(opt => opt.map(f))
 
   def delete(id: Id): Boolean =
     var found = false
+    if idStore.remove(id) != None then found = true
     found
 
   def tasks: Tasks =
     Tasks(idStore)
 
   def tags: Tags =
-    Tags(List.empty)
+    Tags(idStore.flatMap(task => task._2.tags).toSet.toList)
 
   def tasks(tag: Tag): Tasks =
-    Tasks(idStore)
+    Tasks(idStore.filter(task => task._2.tags.find(x => x == tag) != None))
 
   def clear(): Unit =
     idStore.clear()

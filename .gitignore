@@ -4,6 +4,7 @@ $HOME/
 *.log
 .metals/
 .bloop/
+.bsp/
 .ammonite/
 metals.sbt
 target/
